@@ -1,0 +1,9 @@
+version: 1
+frozen: false
+detector_threshold: 0.6
+relevance_delta: 0.15
+model_id: local-deterministic
+temperature: 0.0
+concurrency: 4
+candidate_seed_base: 20260829
+

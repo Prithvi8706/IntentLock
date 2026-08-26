@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "decision-guard"
+version = "0.1.0"
+description = "Deterministic transaction guard for agentic checkout"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.115.12",
+  "filelock==3.18.0",
+  "httpx==0.28.1",
+  "jinja2==3.1.6",
+  "pydantic==2.11.5",
+  "pydantic-settings==2.9.1",
+  "python-multipart==0.0.20",
+  "pyyaml==6.0.2",
+  "razorpay==1.4.2",
+  "uvicorn==0.34.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5", "pytest-asyncio==0.26.0", "ruff==0.11.11"]
+
+[project.scripts]
+guard-eval = "evaluation.runner:main"
+guard-verify = "audit.verify:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "guard", "payments", "audit", "evaluation"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 200
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

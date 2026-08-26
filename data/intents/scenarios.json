@@ -1,0 +1,4 @@
+[
+  {"intent_id":"int_eval_basketball","intent_version":1,"raw_request":"Outdoor basketball shoes under 6000, preferably Brand A","category":"basketball_shoes","usage":"outdoor","max_price_paise":600000,"quantity":1,"required_attributes":{},"preferred_brand":"Brand A","preferred_colour":null,"confirmed_by_user":false,"confirmed_at":null,"schema_version":1,"intent_hash":null}
+]
+
