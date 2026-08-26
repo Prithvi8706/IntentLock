@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.config import settings
 from audit.ledger import Ledger, verify_chain
 from guard.canonical import hash_object, utc_now
 from guard.decision_engine import DecisionEngine
@@ -13,6 +14,7 @@ from guard.intent_compiler import IntentCompiler
 from guard.model_adapter import LocalDeterministicAdapter
 from guard.schemas import EventType, Intent, Listing
 from payments.fake_sink import FakePaymentSink
+from payments.razorpay_client import RazorpayOrderClient
 
 ROOT = Path(__file__).resolve().parents[1]
 app = FastAPI(title="Decision Guard", version="0.1.0")
@@ -21,7 +23,11 @@ templates = Jinja2Templates(directory=ROOT / "app/templates")
 compiler = IntentCompiler()
 engine = DecisionEngine(LocalDeterministicAdapter())
 ledger = Ledger(ROOT / "audit/ledger.jsonl")
-sink = FakePaymentSink()
+if settings.razorpay_key_id and settings.razorpay_key_secret:
+    sink = RazorpayOrderClient(settings.razorpay_key_id, settings.razorpay_key_secret, ledger)
+else:
+    # Keeps local UI/tests usable without credentials; configured deployments use Razorpay above.
+    sink = FakePaymentSink()
 sessions: dict[str, dict] = {}
 
 
@@ -76,12 +82,17 @@ def purchase(intent_id: str):
     state = sessions.get(intent_id)
     if not state:
         raise HTTPException(404, "decision not found")
-    selected = next(x for x in catalogue() if x.sku_id == state["decision"].selected_sku)
+    selected = next((x for x in catalogue() if x.sku_id == state["decision"].selected_sku), None)
+    if selected is None:
+        ledger.append(EventType.ORDER_FAILED, {"error_class": "SKU_UNAVAILABLE"}, state["decision"].decision_id)
+        raise HTTPException(409, "Selected SKU is no longer available")
     try:
         state["order"] = sink.create_order(state["decision"], selected, state["intent"].quantity)
         ledger.append(EventType.ORDER_CREATED, state["order"], state["decision"].decision_id)
     except PermissionError as exc:
         raise HTTPException(403, str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(502, f"Payment provider error: {type(exc).__name__}") from exc
     return RedirectResponse(f"/evidence/{intent_id}", status_code=303)
 
 
@@ -92,4 +103,3 @@ def evidence(request: Request, intent_id: str):
         raise HTTPException(404, "evidence not found")
     valid, _, _ = verify_chain(ledger.path)
     return templates.TemplateResponse(request, "evidence.html", {**state, "ledger_valid": valid})
-

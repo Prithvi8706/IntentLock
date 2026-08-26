@@ -14,7 +14,7 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
 ```
 
-Open `http://127.0.0.1:8000`. Use the guard toggle to compare the shared baseline and protected paths.
+Open `http://127.0.0.1:8000`. Use the guard toggle to compare the shared baseline and protected paths. When `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are present in `.env`, the final purchase action uses the Razorpay Test Mode Orders API; without them, the UI uses a local fake sink for development.
 
 ```bash
 python -m pytest
