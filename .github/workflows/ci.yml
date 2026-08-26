@@ -15,4 +15,4 @@ jobs:
       - name: Reject committed secrets
         shell: bash
         run: |
-          if git grep -nE 'rzp_live_|(sk|AIza)[-_A-Za-z0-9]{20,}' -- ':!.env.example'; then exit 1; fi
+          if git grep -nE 'rzp_(live|test)_[A-Za-z0-9]{12,}|(sk|AIza)[-_A-Za-z0-9]{20,}' -- ':!.env.example'; then exit 1; fi
