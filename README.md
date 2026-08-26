@@ -2,9 +2,9 @@
 
 Decision Guard prevents agent-induced wrong-item returns by checking whether an AI buyer's selection satisfies the buyer's confirmed intent before a Razorpay order can be created.
 
-> **Current status: early scaffold, not submission-ready.** The repository currently uses a deterministic local ranking stub and a fake payment sink in the web demo. Real model integration, a real Razorpay Test Mode order, the full benchmark, frozen results, and complete evidence capture remain to be implemented. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for the verified gap analysis.
+> **Current status: active implementation, not submission-ready.** The guarded path now sanitizes detected catalogue injection before ranking and has created a real Razorpay Test Mode order. Real model integration, the full benchmark, frozen results, and complete evidence capture remain to be implemented. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for the verified gap analysis.
 
-The intended guarantee is that an LLM may rank products but cannot authorize a transaction. The current scaffold contains the beginnings of that boundary, but it has not yet been demonstrated with a real model and Razorpay Test Mode order. The included demo uses a fake payment sink so it runs without credentials. `RazorpayOrderClient` supports Test Mode only and rejects non-`rzp_test_` keys, but it is not yet wired into the UI.
+The intended guarantee is that an LLM may rank products but cannot authorize a transaction. The current implementation demonstrates that boundary with a deterministic model stub and a real Razorpay Test Mode order; a hosted model is the next milestone. The UI falls back to a fake payment sink only when credentials are absent. `RazorpayOrderClient` supports Test Mode only and rejects non-`rzp_test_` keys.
 
 ## Quick start
 
@@ -32,6 +32,8 @@ buyer request -> confirmed + hashed intent -> deterministic admissibility gate
 ```
 
 The synthetic catalogues trust structured fields and treat titles and descriptions as untrusted. Dishonest structured fields, universal prompt-injection protection, live payments, and real financial-loss estimates are out of scope. See [threat model](docs/threat-model.md), [architecture](docs/architecture.md), and [evaluation method](docs/evaluation.md).
+
+The first protected Test Mode order proof is recorded in [docs/razorpay-proof.md](docs/razorpay-proof.md).
 
 ## Evaluation
 

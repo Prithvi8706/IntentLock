@@ -27,10 +27,13 @@ class IntentCompiler:
         if not price or not category:
             raise ValueError("Please provide a category and maximum price")
         usage = Usage.OUTDOOR if "outdoor" in lowered else Usage.INDOOR if "indoor" in lowered else Usage.ANY
-        brand = (match.group(1).strip() if (match := re.search(r"(?:prefer(?:ably)?|brand)\s+([a-z][a-z0-9 ]+)", lowered)) else None)
+        brand = (
+            match.group(1).strip().title()
+            if (match := re.search(r"(?:prefer(?:ably)?|brand)\s+([a-z][a-z0-9 ]+)", lowered))
+            else None
+        )
         return Intent(
             intent_id=f"int_{uuid4().hex[:12]}", intent_version=1, raw_request=raw_request,
             category=category, usage=usage, max_price_paise=rupees_to_paise(price.group(1).replace(",", "")),
             preferred_brand=brand,
         )
-

@@ -1,9 +1,10 @@
 import pytest
 
+from audit.ledger import Ledger
 from guard.canonical import utc_now
 from guard.schemas import Action, DecisionRecord, Listing, ReasonCode
 from payments.fake_sink import FakePaymentSink
-from payments.razorpay_client import validate_test_key
+from payments.razorpay_client import RazorpayOrderClient, validate_test_key
 
 
 def decision(action):
@@ -34,3 +35,26 @@ def test_only_test_keys():
     with pytest.raises(ValueError):
         validate_test_key("rzp_live_forbidden")
 
+
+def test_real_client_is_idempotent_by_decision_id(tmp_path):
+    class FakeOrderApi:
+        def __init__(self):
+            self.calls = 0
+
+        def create(self, payload):
+            self.calls += 1
+            return {"id": "order_test_once", **payload}
+
+    class FakeSdk:
+        def __init__(self):
+            self.order = FakeOrderApi()
+
+    client = RazorpayOrderClient(
+        "rzp_test_example", "secret", Ledger(tmp_path / "ledger.jsonl")
+    )
+    client.client = FakeSdk()
+    first = client.create_order(decision(Action.ALLOW), item(), 2)
+    second = client.create_order(decision(Action.ALLOW), item(), 2)
+    assert first == second
+    assert first["amount"] == 24690
+    assert client.client.order.calls == 1

@@ -14,6 +14,13 @@ def test_money_conversion_and_missing_fields():
         raise AssertionError("missing hard fields must not be guessed")
 
 
+def test_compiler_extracts_brand_preference():
+    intent = IntentCompiler().compile(
+        "Outdoor basketball shoes under 6000, preferably Brand A"
+    )
+    assert intent.preferred_brand == "Brand A"
+
+
 def test_confirmation_and_revision_are_hash_versioned():
     draft = IntentCompiler().compile("outdoor basketball shoes under 6000")
     store = IntentStore()
@@ -28,4 +35,3 @@ def test_canonical_hash_ignores_field_and_sorts_nested_data():
     one = {"b": {"y": 2, "x": 1}, "a": 3, "intent_hash": "old"}
     two = {"a": 3, "b": {"x": 1, "y": 2}, "intent_hash": "different"}
     assert hash_object(one, "intent_hash") == hash_object(two, "intent_hash")
-

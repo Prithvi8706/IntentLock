@@ -7,6 +7,7 @@ from guard.detector import scan_listing
 from guard.model_adapter import ModelAdapter
 from guard.ranker import rank
 from guard.relevance import rank_structured, structured_score
+from guard.sanitizer import sanitize
 from guard.schemas import Action, DecisionRecord, Intent, Listing, ReasonCode
 from guard.validator import final_validate
 
@@ -47,7 +48,18 @@ class DecisionEngine:
                                     started=started, action=Action.BLOCK, reasons=[ReasonCode.NO_ELIGIBLE_SKU])
             detections = {x.sku_id: scan_listing(x.title, x.description, self.detector_threshold) for x in eligible}
             flags = [sku for sku, result in detections.items() if result.flagged]
-            ranked, _ = await rank(self.adapter, intent, eligible, seed)
+            ranker_listings = [
+                item.model_copy(
+                    update={
+                        "title": sanitize(item.title, detections[item.sku_id].flagged),
+                        "description": sanitize(
+                            item.description, detections[item.sku_id].flagged
+                        ),
+                    }
+                )
+                for item in eligible
+            ]
+            ranked, _ = await rank(self.adapter, intent, ranker_listings, seed)
             selected = next(x for x in eligible if x.sku_id == ranked[0])
             structured = rank_structured(intent, eligible)[0]
             gap = structured_score(intent, structured) - structured_score(intent, selected)
@@ -70,4 +82,3 @@ class DecisionEngine:
         except Exception:
             return self._record(intent=intent, mode=guard_mode, before=len(listings), after=0, seed=seed,
                                 started=started, action=Action.ESCALATE, reasons=[ReasonCode.RANKER_OUTPUT_INVALID])
-
