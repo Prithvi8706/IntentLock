@@ -4,6 +4,8 @@ Decision Guard prevents agent-induced wrong-item returns by checking whether an 
 
 > **Current status: active implementation, not submission-ready.** The guarded path now sanitizes detected catalogue injection before ranking and has created a real Razorpay Test Mode order. Real model integration, the full benchmark, frozen results, and complete evidence capture remain to be implemented. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for the verified gap analysis.
 
+The remaining work is governed by the [24-hour execution-grade plan](EXECUTION_PLAN.md), which defines the critical path, time budget, acceptance gates, predetermined cuts, and release evidence for every phase.
+
 The intended guarantee is that an LLM may rank products but cannot authorize a transaction. The current implementation demonstrates that boundary with a deterministic model stub and a real Razorpay Test Mode order; a hosted model is the next milestone. The UI falls back to a fake payment sink only when credentials are absent. `RazorpayOrderClient` supports Test Mode only and rejects non-`rzp_test_` keys.
 
 ## Quick start
